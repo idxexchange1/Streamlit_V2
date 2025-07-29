@@ -86,9 +86,9 @@ if st.button("Predict Price"):
             if view == "Yes":
                 input_dict['ViewYN_1'] = 1
 
-            for i in range(2, 20):
-                col = f'LocationCluster_{float(i)}'
-                input_dict[col] = 1 if location_cluster == i else 0
+            #for i in range(2, 20):
+                #col = f'LocationCluster_{float(i)}'
+                #input_dict[col] = 1 if location_cluster == i else 0
 
             input_df = pd.DataFrame([input_dict])
             model_features = model.feature_names_in_
