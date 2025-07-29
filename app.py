@@ -17,7 +17,7 @@ from geopy.geocoders import GoogleV3
 model = joblib.load("model.pkl")
 
 # Initialize geolocator with API key from secrets
-geolocator = GoogleV3(api_key=st.secrets["google_maps_api_key"])
+geolocator = GoogleV3(api_key=st.secrets["AIzaSyB0szWlIt9Vj26cM300wTcWxwL0ABHZ9HE"])
 
 st.title("🏡 California House Price Predictor")
 
