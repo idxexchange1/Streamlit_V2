@@ -52,8 +52,8 @@ if st.button("Predict Price"):
         else:
             latitude = location.latitude
             longitude = location.longitude
-            st.markdown(f"**Resolved Latitude:** {latitude:.5f}")
-            st.markdown(f"**Resolved Longitude:** {longitude:.5f}")
+            # st.markdown(f"**Resolved Latitude:** {latitude:.5f}")
+            # st.markdown(f"**Resolved Longitude:** {longitude:.5f}")
 
             input_dict = {
                 'LivingArea': sqft,
