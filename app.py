@@ -39,7 +39,7 @@ fireplace = st.selectbox("Fireplace", ["No", "Yes"])
 pool = st.selectbox("Private Pool", ["No", "Yes"])
 view = st.selectbox("Has View", ["No", "Yes"])
 new_construction = st.selectbox("New Construction", ["No", "Yes"])
-location_cluster = st.selectbox("Location Cluster", list(range(1, 20)))
+# location_cluster = st.selectbox("Location Cluster", list(range(1, 20)))
 
 if st.button("Predict Price"):
     if not address:
