@@ -81,6 +81,6 @@ if st.button("🔮 Predict Price"):
             log_price = model.predict(input_df)[0]
             predicted_price = np.expm1(log_price)
 
-            # ✅ Display only what’s needed
+            # Display only what’s needed
             st.success(f"💰 **Estimated Home Price:** ${predicted_price:,.0f}")
             st.info(f"📍 **Latitude:** {latitude:.5f} | **Longitude:** {longitude:.5f}")
