@@ -13,18 +13,18 @@ import numpy as np
 import joblib
 from geopy.geocoders import GoogleV3
 
-# Load model
+# Load trained model
 model = joblib.load("model.pkl")
 
-# Initialize geolocator with API key from secrets
+# Initialize geocoder
 geolocator = GoogleV3(api_key=st.secrets["google_maps_api_key"])
 
+# Title
 st.title("🏡 California House Price Predictor")
 
-# Address input (no default)
-address = st.text_input("Property Address")
+# User inputs
+address = st.text_input("📍 Enter Property Address")
 
-# Other inputs
 sqft = st.number_input("Living Area (sqft)", 500, 10000, step=50)
 beds = st.number_input("Bedrooms", 0, 10)
 baths = st.number_input("Bathrooms", 0, 10)
@@ -39,21 +39,18 @@ fireplace = st.selectbox("Fireplace", ["No", "Yes"])
 pool = st.selectbox("Private Pool", ["No", "Yes"])
 view = st.selectbox("Has View", ["No", "Yes"])
 new_construction = st.selectbox("New Construction", ["No", "Yes"])
-location_cluster = st.selectbox("Location Cluster", list(range(1, 20)))
 
-if st.button("Predict Price"):
+# Prediction
+if st.button("🔮 Predict Price"):
     if not address:
-        st.error("Please enter a property address.")
+        st.error("❗ Please enter a property address.")
     else:
-        # Geocode the address to get lat/lon
         location = geolocator.geocode(address)
         if location is None:
-            st.error("Could not geocode the address. Please enter a valid address.")
+            st.error("❗ Could not geocode the address. Please enter a valid address.")
         else:
             latitude = location.latitude
             longitude = location.longitude
-            # st.markdown(f"**Resolved Latitude:** {latitude:.5f}")
-            # st.markdown(f"**Resolved Longitude:** {longitude:.5f}")
 
             input_dict = {
                 'LivingArea': sqft,
@@ -65,37 +62,25 @@ if st.button("Predict Price"):
                 'Stories': stories,
                 'ParkingTotal': parking_total,
                 'Latitude': latitude,
-                'Longitude': longitude
+                'Longitude': longitude,
+                'AttachedGarageYN_1': int(attached_garage == "Yes"),
+                'FireplaceYN_1': int(fireplace == "Yes"),
+                'NewConstructionYN_1': int(new_construction == "Yes"),
+                'PoolPrivateYN_1': int(pool == "Yes"),
+                'ViewYN_1': int(view == "Yes")
             }
 
-            dummy_cols = [
-                'AttachedGarageYN_1', 'FireplaceYN_1', 'NewConstructionYN_1',
-                'PoolPrivateYN_1', 'ViewYN_1'
-            ]
-            for col in dummy_cols:
-                input_dict[col] = 0
-
-            if attached_garage == "Yes":
-                input_dict['AttachedGarageYN_1'] = 1
-            if fireplace == "Yes":
-                input_dict['FireplaceYN_1'] = 1
-            if new_construction == "Yes":
-                input_dict['NewConstructionYN_1'] = 1
-            if pool == "Yes":
-                input_dict['PoolPrivateYN_1'] = 1
-            if view == "Yes":
-                input_dict['ViewYN_1'] = 1
-
-            for i in range(2, 20):
-                col = f'LocationCluster_{float(i)}'
-                input_dict[col] = 1 if location_cluster == i else 0
+            # Add missing dummy columns (if needed)
+            for col in model.feature_names_in_:
+                if col not in input_dict:
+                    input_dict[col] = 0
 
             input_df = pd.DataFrame([input_dict])
-            model_features = model.feature_names_in_
-            input_df = input_df.reindex(columns=model_features, fill_value=0)
+            input_df = input_df[model.feature_names_in_]
 
             log_price = model.predict(input_df)[0]
             predicted_price = np.expm1(log_price)
 
-            st.success(f"💰 Estimated Home Price: ${predicted_price:,.0f}")
-
+            # ✅ Display only what’s needed
+            st.success(f"💰 **Estimated Home Price:** ${predicted_price:,.0f}")
+            st.info(f"📍 **Latitude:** {latitude:.5f} | **Longitude:** {longitude:.5f}")
