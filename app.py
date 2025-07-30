@@ -22,24 +22,8 @@ geolocator = GoogleV3(api_key=st.secrets["google_maps_api_key"])
 
 st.title("🏡 California House Price Predictor")
 
-# Address input
-address = st.text_input("📍 Enter Property Address (optional)")
-
-# If address is entered, geocode it; else manual lat/lon inputs
-if address:
-    location = geolocator.geocode(address)
-    if location is None:
-        st.error("❗ Could not geocode the address. Please enter a valid address or enter lat/lon manually.")
-        # Provide fallback manual lat/lon inputs if address fails
-        latitude = st.number_input("Latitude", min_value=32.56, max_value=36.06, value=34.3, step=0.0001)
-        longitude = st.number_input("Longitude", min_value=-119.52, max_value=-115.93, value=-117.7, step=0.0001)
-    else:
-        latitude = location.latitude
-        longitude = location.longitude
-        st.info(f"📍 Geocoded Location: {latitude:.5f}, {longitude:.5f}")
-else:
-    latitude = st.number_input("Latitude", min_value=32.56, max_value=36.06, value=34.3, step=0.0001)
-    longitude = st.number_input("Longitude", min_value=-119.52, max_value=-115.93, value=-117.7, step=0.0001)
+# Address input only
+address = st.text_input("📍 Enter Property Address")
 
 # Other inputs
 sqft = st.number_input("Living Area (sqft)", 500, 10000, step=50)
@@ -59,42 +43,48 @@ new_construction = st.selectbox("New Construction", ["No", "Yes"])
 
 # Predict button
 if st.button("Predict Price"):
-    # Predict cluster from lat/lon
-    cluster = kmeans.predict([[latitude, longitude]])[0]
+    if not address:
+        st.error("❗ Please enter a property address.")
+    else:
+        location = geolocator.geocode(address)
+        if location is None:
+            st.error("❗ Could not geocode the address. Please enter a valid address.")
+        else:
+            latitude = location.latitude
+            longitude = location.longitude
 
-    input_dict = {
-        'LivingArea': sqft,
-        'BedroomsTotal': beds,
-        'BathroomsTotalInteger': baths,
-        'GarageSpaces': garage_spaces,
-        'LotSizeSquareFeet': lot_size,
-        'YearBuilt': year_built,
-        'Stories': stories,
-        'ParkingTotal': parking_total,
-        'Latitude': latitude,
-        'Longitude': longitude,
-        'AttachedGarageYN_1': int(attached_garage == "Yes"),
-        'FireplaceYN_1': int(fireplace == "Yes"),
-        'NewConstructionYN_1': int(new_construction == "Yes"),
-        'PoolPrivateYN_1': int(pool == "Yes"),
-        'ViewYN_1': int(view == "Yes"),
-    }
+            # Predict cluster
+            cluster = kmeans.predict([[latitude, longitude]])[0]
 
-    # One-hot encode clusters (assuming clusters 2-19 as before)
-    for i in range(2, 20):
-        col = f'LocationCluster_{float(i)}'
-        input_dict[col] = 1 if cluster == i else 0
+            input_dict = {
+                'LivingArea': sqft,
+                'BedroomsTotal': beds,
+                'BathroomsTotalInteger': baths,
+                'GarageSpaces': garage_spaces,
+                'LotSizeSquareFeet': lot_size,
+                'YearBuilt': year_built,
+                'Stories': stories,
+                'ParkingTotal': parking_total,
+                'Latitude': latitude,
+                'Longitude': longitude,
+                'AttachedGarageYN_1': int(attached_garage == "Yes"),
+                'FireplaceYN_1': int(fireplace == "Yes"),
+                'NewConstructionYN_1': int(new_construction == "Yes"),
+                'PoolPrivateYN_1': int(pool == "Yes"),
+                'ViewYN_1': int(view == "Yes"),
+            }
 
-    # Make sure all model features are present
-    input_df = pd.DataFrame([input_dict])
-    input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+            # One-hot encode clusters 2-19
+            for i in range(2, 20):
+                col = f'LocationCluster_{float(i)}'
+                input_dict[col] = 1 if cluster == i else 0
 
-    # Predict log price and exponentiate
-    log_price = model.predict(input_df)[0]
-    predicted_price = np.expm1(log_price)
+            input_df = pd.DataFrame([input_dict])
+            input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
 
-    st.success(f"💰 Estimated Home Price: ${predicted_price:,.0f}")
-    st.info(f"📍 Latitude: {latitude:.5f}, Longitude: {longitude:.5f}")
-    st.info(f"📊 Predicted Location Cluster: {cluster}")
+            log_price = model.predict(input_df)[0]
+            predicted_price = np.expm1(log_price)
 
-    st.info(f"📊 Predicted Location Cluster: {cluster}")
+            st.success(f"💰 Estimated Home Price: ${predicted_price:,.0f}")
+            st.info(f"📍 Latitude: {latitude:.5f}, Longitude: {longitude:.5f}")
+            st.info(f"📊 Predicted Location Cluster: {cluster}")
