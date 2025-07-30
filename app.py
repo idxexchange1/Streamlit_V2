@@ -14,7 +14,7 @@ import joblib
 
 # Load models
 model = joblib.load("model.pkl")
-kmeans = joblib.load("kmeans.pkl")  # 👈 pre-trained KMeans clustering model
+kmeans = joblib.load("kmeans_model.pkl")  # 👈 pre-trained KMeans clustering model
 
 st.title("🏡 California House Price Predictor")
 
